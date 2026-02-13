@@ -22,3 +22,12 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated static files
+assets/html_files/
+
+# Local configuration (use config.default.yaml as template)
+config.yaml
+
+# UV cache
+.uv/
