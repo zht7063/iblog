@@ -60,13 +60,14 @@ class TemplateRenderer:
         
         return breadcrumb
     
-    def render_post(self, content_html: str, metadata: dict, total_posts: int = 0) -> str:
+    def render_post(self, content_html: str, metadata: dict, total_posts: int = 0, toc: list = None) -> str:
         """渲染单篇博文页面
         
         Args:
             content_html: Markdown 转换后的 HTML 内容
             metadata: 文章元数据
             total_posts: 博客总数
+            toc: 目录列表，每项包含 level, text, id
             
         Returns:
             str: 完整的 HTML 页面
@@ -77,7 +78,8 @@ class TemplateRenderer:
             content_html=content_html,
             metadata=metadata,
             nav=self._get_nav_links(depth=1),
-            total_posts=total_posts
+            total_posts=total_posts,
+            toc=toc or []
         )
     
     def render_index(self, posts: list[dict], total_posts: int = 0) -> str:

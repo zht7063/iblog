@@ -5,19 +5,203 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
 <style>
-    article {
+    /* 博文容器布局 */
+    .post-container {
+        display: flex;
+        gap: 30px;
+        position: relative;
         margin-top: 20px;
+    }
+
+    /* 目录侧边栏 */
+    .toc-sidebar {
+        position: sticky;
+        top: 20px;
+        width: 220px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        flex-shrink: 0;
+        align-self: flex-start;
+    }
+
+    .toc-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #000;
+    }
+
+    .toc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .toc-item {
+        margin: 0;
+        padding: 0;
+    }
+
+    .toc-link {
+        display: block;
+        padding: 6px 0;
+        color: #666;
+        text-decoration: none;
+        font-size: 0.9em;
+        line-height: 1.4;
+        transition: all 0.2s;
+        border-left: 2px solid transparent;
+        padding-left: 10px;
+    }
+
+    .toc-link:hover {
+        color: #000;
+        border-left-color: #ddd;
+    }
+
+    .toc-link.active {
+        color: #000;
+        font-weight: 500;
+        border-left-color: #000;
+    }
+
+    /* 根据标题层级缩进 */
+    .toc-item.level-2 .toc-link { padding-left: 10px; }
+    .toc-item.level-3 .toc-link { padding-left: 25px; }
+    .toc-item.level-4 .toc-link { padding-left: 40px; }
+    .toc-item.level-5 .toc-link { padding-left: 55px; }
+    .toc-item.level-6 .toc-link { padding-left: 70px; }
+
+    /* 文章主体 */
+    .post-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    article {
+        margin: 0;
     }
 
     .markdown-body {
         box-sizing: border-box;
         background-color: rgb(250, 249, 245) !important;
     }
+
+    /* 平滑滚动 */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* 为标题添加滚动间距，避免被导航栏遮挡 */
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4,
+    .markdown-body h5,
+    .markdown-body h6 {
+        scroll-margin-top: 20px;
+    }
+
+    /* 响应式设计：在小屏幕上隐藏目录 */
+    @media (max-width: 1024px) {
+        .toc-sidebar {
+            display: none;
+        }
+        
+        .post-container {
+            gap: 0;
+        }
+    }
+
+    /* 滚动条样式 */
+    .toc-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .toc-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .toc-sidebar::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 3px;
+    }
+
+    .toc-sidebar::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<article class="markdown-body">
-    {{ content_html | safe }}
-</article>
+<div class="post-container">
+    <!-- 左侧目录 -->
+    {% if toc and toc|length > 0 %}
+    <aside class="toc-sidebar">
+        <div class="toc-title">目录</div>
+        <ul class="toc-list">
+            {% for item in toc %}
+            <li class="toc-item level-{{ item.level }}">
+                <a href="#{{ item.id }}" class="toc-link">{{ item.text }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </aside>
+    {% endif %}
+
+    <!-- 右侧文章内容 -->
+    <div class="post-content">
+        <article class="markdown-body">
+            {{ content_html | safe }}
+        </article>
+    </div>
+</div>
+
+<script>
+// 目录高亮功能
+document.addEventListener('DOMContentLoaded', function() {
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const headings = document.querySelectorAll('.markdown-body h1[id], .markdown-body h2[id], .markdown-body h3[id], .markdown-body h4[id], .markdown-body h5[id], .markdown-body h6[id]');
+    
+    if (tocLinks.length === 0 || headings.length === 0) return;
+
+    // 监听滚动事件，更新高亮
+    let ticking = false;
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            window.requestAnimationFrame(function() {
+                updateActiveLink();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+
+    function updateActiveLink() {
+        let currentHeading = null;
+        const scrollPosition = window.scrollY + 100;
+
+        // 找到当前可见的标题
+        for (let i = headings.length - 1; i >= 0; i--) {
+            if (headings[i].offsetTop <= scrollPosition) {
+                currentHeading = headings[i];
+                break;
+            }
+        }
+
+        // 更新目录高亮
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (currentHeading && link.getAttribute('href') === '#' + currentHeading.id) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    // 初始化时更新一次
+    updateActiveLink();
+});
+</script>
 {% endblock %}

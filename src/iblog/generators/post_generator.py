@@ -4,6 +4,7 @@ from pathlib import Path
 from loguru import logger
 
 from .base_generator import BaseGenerator
+from iblog.core.toc_generator import TocGenerator
 
 
 class PostGenerator(BaseGenerator):
@@ -28,8 +29,19 @@ class PostGenerator(BaseGenerator):
                 # 将 Markdown 正文转换为 HTML
                 content_html = self.md_parser.render(post["content"])
                 
+                # 提取目录（TOC）
+                toc = TocGenerator.extract_toc(content_html)
+                
+                # 为标题添加ID以支持锚点跳转
+                content_html = TocGenerator.add_heading_ids(content_html)
+                
                 # 使用模板渲染完整页面
-                html = self.renderer.render_post(content_html, post["metadata"], total_posts=len(posts))
+                html = self.renderer.render_post(
+                    content_html, 
+                    post["metadata"], 
+                    total_posts=len(posts),
+                    toc=toc
+                )
                 
                 # 生成输出文件路径
                 output_path = blogs_dir / post["file_path"].with_suffix(".html").name
