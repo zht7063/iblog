@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+<style>
+    article {
+        margin-top: 20px;
+    }
+
+    .markdown-body {
+        box-sizing: border-box;
+        background-color: rgb(250, 249, 245) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="markdown-body">
+    {{ content_html | safe }}
+</article>
+{% endblock %}

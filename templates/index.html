@@ -1,0 +1,149 @@
+{% extends "_base.html" %}
+
+{% block extra_head %}
+<style>
+    .post-list {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .post-card {
+        display: block;
+        padding: 20px;
+        text-decoration: none;
+        color: #000;
+        background-color: transparent;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+        position: relative;
+    }
+
+    .post-card:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    .post-card.pinned {
+        background-color: rgba(255, 215, 0, 0.05);
+        border-left: 3px solid #ffd700;
+    }
+
+    .post-card.pinned:hover {
+        background-color: rgba(255, 215, 0, 0.1);
+    }
+
+    .post-card h2 {
+        margin: 0 0 10px 0;
+        font-size: 1.5em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pinned-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75em;
+        color: #d4a017;
+        background-color: #fff9e6;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-weight: 500;
+    }
+
+    .post-card .desc {
+        margin: 0 0 15px 0;
+        color: #555;
+        font-size: 0.95em;
+        line-height: 1.6;
+    }
+
+    .post-card .meta {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .post-card .meta span::before {
+        content: "• ";
+        margin-right: 5px;
+    }
+
+    .post-card .meta span:first-child::before {
+        content: "";
+        margin-right: 0;
+    }
+
+    .post-card .date {
+        display: flex;
+        gap: 15px;
+        font-size: 0.85em;
+        color: #888;
+    }
+
+    .post-card .date span::before {
+        content: "📅 ";
+    }
+
+    .post-card .date span:last-child::before {
+        content: "🔄 ";
+    }
+
+    @media (max-width: 767px) {
+        .post-list {
+            gap: 20px;
+        }
+
+        .post-card {
+            padding: 15px;
+        }
+
+        .post-card h2 {
+            font-size: 1.3em;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="post-list">
+    {% if posts %}
+        {% for post in posts %}
+        <a href="{{ post.url }}" class="post-card{% if post.pinned %} pinned{% endif %}">
+            <h2>
+                {{ post.title or "无标题" }}
+                {% if post.pinned %}
+                <span class="pinned-badge">📌 置顶</span>
+                {% endif %}
+            </h2>
+            {% if post.description %}
+            <p class="desc">{{ post.description }}</p>
+            {% endif %}
+            <div class="meta">
+                {% if post.category %}
+                <span>{{ post.category }}</span>
+                {% endif %}
+                {% if post.tags %}
+                <span>{{ post.tags | join(", ") }}</span>
+                {% endif %}
+            </div>
+            <div class="date">
+                {% if post.date %}
+                <span>{{ post.date }}</span>
+                {% endif %}
+                {% if post.updated %}
+                <span>{{ post.updated }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    {% else %}
+        <p style="text-align: center; color: #999; margin-top: 40px;">暂无博客文章</p>
+    {% endif %}
+</section>
+{% endblock %}

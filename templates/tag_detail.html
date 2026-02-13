@@ -1,0 +1,180 @@
+{% extends "_base.html" %}
+
+{% block extra_head %}
+<style>
+    .breadcrumb {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        color: #000;
+        text-decoration: underline;
+    }
+
+    .breadcrumb span {
+        color: #000;
+    }
+
+    .tag-title {
+        margin-bottom: 30px;
+    }
+
+    .tag-title h1 {
+        margin: 0;
+        font-size: 2em;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .tag-title .count {
+        color: #999;
+        font-size: 0.6em;
+        font-weight: normal;
+        margin-left: 10px;
+    }
+
+    .post-list {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .post-card {
+        display: block;
+        padding: 20px;
+        text-decoration: none;
+        color: #000;
+        background-color: transparent;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+
+    .post-card:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    .post-card h2 {
+        margin: 0 0 10px 0;
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+
+    .post-card .desc {
+        margin: 0 0 15px 0;
+        color: #555;
+        font-size: 0.95em;
+        line-height: 1.6;
+    }
+
+    .post-card .meta {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .post-card .meta span::before {
+        content: "• ";
+        margin-right: 5px;
+    }
+
+    .post-card .meta span:first-child::before {
+        content: "";
+        margin-right: 0;
+    }
+
+    .post-card .date {
+        display: flex;
+        gap: 15px;
+        font-size: 0.85em;
+        color: #888;
+    }
+
+    .post-card .date span::before {
+        content: "📅 ";
+    }
+
+    .post-card .date span:last-child::before {
+        content: "🔄 ";
+    }
+
+    .empty-message {
+        text-align: center;
+        color: #999;
+        margin-top: 40px;
+    }
+
+    @media (max-width: 767px) {
+        .post-list {
+            gap: 20px;
+        }
+
+        .post-card {
+            padding: 15px;
+        }
+
+        .post-card h2 {
+            font-size: 1.3em;
+        }
+
+        .tag-title h1 {
+            font-size: 1.6em;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 面包屑导航 -->
+<div class="breadcrumb">
+    <a href="{{ breadcrumb.home }}">主页</a> > 
+    <a href="{{ breadcrumb.tags }}">标签</a> > 
+    <span>{{ tag_name }}</span>
+</div>
+
+<!-- 标签标题 -->
+<div class="tag-title">
+    <h1>{{ tag_name }}<span class="count">({{ posts|length }} 篇)</span></h1>
+</div>
+
+<!-- 文章列表 -->
+<section class="post-list">
+    {% if posts %}
+        {% for post in posts %}
+        <a href="{{ post.url }}" class="post-card">
+            <h2>{{ post.title or "无标题" }}</h2>
+            {% if post.description %}
+            <p class="desc">{{ post.description }}</p>
+            {% endif %}
+            <div class="meta">
+                {% if post.category %}
+                <span>{{ post.category }}</span>
+                {% endif %}
+                {% if post.tags %}
+                <span>{{ post.tags | join(", ") }}</span>
+                {% endif %}
+            </div>
+            <div class="date">
+                {% if post.date %}
+                <span>{{ post.date }}</span>
+                {% endif %}
+                {% if post.updated %}
+                <span>{{ post.updated }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    {% else %}
+        <p class="empty-message">该标签下暂无文章</p>
+    {% endif %}
+</section>
+{% endblock %}

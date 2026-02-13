@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ʕ•ᴥ•ʔ Iris{% endblock %}</title>
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgb(250, 249, 245);
+        }
+
+        header {
+            margin-top: 40px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        nav {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1.5px solid #000;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #000;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px;
+        }
+
+        nav a:link,
+        nav a:visited,
+        nav a:active {
+            color: #000;
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        footer > div {
+            margin-bottom: 10px;
+        }
+
+        footer a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #000;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 767px) {
+            body {
+                padding: 15px;
+            }
+            header {
+                margin-top: 20px;
+            }
+            footer {
+                margin-top: 40px;
+                padding-top: 20px;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- 顶部标题区域 -->
+    <header>
+        <h1>ʕ•ᴥ•ʔ Iris</h1>
+        <p>Sky is Your Limit.</p>
+    </header>
+    
+    <!-- 导航栏 -->
+    <nav>
+        <a href="{{ nav.home }}">主页</a>
+        <a href="{{ nav.categories }}">分组</a>
+        <a href="{{ nav.tags }}">标签</a>
+        <a href="{{ nav.about }}">关于</a>
+    </nav>
+    
+    <!-- 正文内容区域，由子模板填充 -->
+    {% block content %}{% endblock %}
+    
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-copyright">© 2026 Iris. All Rights Reserved.</div>
+        <div class="footer-social">
+            <a href="https://github.com/zht7063" target="_blank" rel="noopener noreferrer">GitHub</a> | 
+            <a href="mailto:zht7063@163.com">Email</a>
+        </div>
+        <div class="footer-info">
+            Powered by iblog • 运行 <span id="runDays">0</span> 天 • 共 {{ total_posts }} 篇博客
+        </div>
+    </footer>
+    
+    <script>
+        // 计算运行天数
+        const startDate = new Date('2026-02-13');
+        const today = new Date();
+        const diffTime = Math.abs(today - startDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        document.getElementById('runDays').textContent = diffDays;
+    </script>
+</body>
+</html>

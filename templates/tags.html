@@ -1,0 +1,98 @@
+{% extends "_base.html" %}
+
+{% block extra_head %}
+<style>
+    .page-title {
+        margin-top: 20px;
+        margin-bottom: 40px;
+    }
+
+    .page-title h1 {
+        margin: 0 0 10px 0;
+        font-size: 2em;
+        font-weight: 600;
+    }
+
+    .page-title .subtitle {
+        color: #666;
+        font-size: 0.95em;
+    }
+
+    .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+        justify-content: flex-start;
+        margin-top: 30px;
+        padding: 20px;
+    }
+
+    .tag-item {
+        display: inline-block;
+        padding: 10px 20px;
+        text-decoration: none;
+        color: #000;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .tag-item:hover {
+        background: rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .tag-name {
+        font-weight: 500;
+    }
+
+    .tag-count {
+        color: #999;
+        font-size: 0.85em;
+        margin-left: 5px;
+    }
+
+    .empty-message {
+        text-align: center;
+        color: #999;
+        margin-top: 40px;
+        font-size: 0.95em;
+    }
+
+    @media (max-width: 767px) {
+        .tag-cloud {
+            padding: 10px;
+            gap: 12px;
+        }
+
+        .tag-item {
+            padding: 8px 16px;
+        }
+
+        .page-title h1 {
+            font-size: 1.6em;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h1>标签云</h1>
+    <p class="subtitle">通过标签探索文章主题</p>
+</div>
+
+{% if tags %}
+<div class="tag-cloud">
+    {% for tag in tags %}
+    <a href="{{ tag.url }}" class="tag-item" style="font-size: {{ tag.font_size }};">
+        <span class="tag-name">{{ tag.name }}</span>
+        <span class="tag-count">({{ tag.count }})</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-message">暂无标签</p>
+{% endif %}
+{% endblock %}
