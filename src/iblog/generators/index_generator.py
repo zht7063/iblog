@@ -20,11 +20,12 @@ class IndexGenerator(BaseGenerator):
         
         logger.info("开始生成首页")
         
-        # 为每篇文章添加相对 URL（指向 blogs/ 子目录）
+        # 为每篇文章添加相对 URL（使用配置的路径）
+        posts_dir = self.config.paths.output.posts
         posts_with_url = []
         for post in posts:
             metadata = post["metadata"].copy()
-            metadata["url"] = f"blogs/{post['file_path'].stem}.html"
+            metadata["url"] = f"{posts_dir}/{post['file_path'].stem}.html"
             posts_with_url.append({"metadata": metadata})
         
         # 渲染首页

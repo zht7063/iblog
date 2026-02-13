@@ -3,9 +3,23 @@
 from loguru import logger
 import frontmatter
 
+from .config_models import Config
+
 
 class MetadataParser:
     """解析 Markdown 文件的 Frontmatter 元数据"""
+    
+    def __init__(self, config: Config):
+        """初始化元数据解析器
+        
+        Args:
+            config: 配置对象
+        """
+        self.config = config
+        # 从配置读取默认值
+        self.default_category = config.posts.defaults.category
+        self.default_tags = config.posts.defaults.tags
+        self.default_author = config.posts.defaults.author or config.site.author
     
     def parse(self, md_content: str) -> tuple[dict, str]:
         """解析 Frontmatter，返回 (元数据, 正文)
@@ -46,11 +60,17 @@ class MetadataParser:
             elif not isinstance(validated["tags"], list):
                 validated["tags"] = [str(validated["tags"])]
         else:
-            validated["tags"] = []
+            # 使用配置中的默认标签
+            validated["tags"] = self.default_tags.copy()
         
         # 确保 category 存在
         if "category" not in validated:
-            validated["category"] = "未分类"
+            # 使用配置中的默认分类
+            validated["category"] = self.default_category
+        
+        # 确保 author 存在
+        if "author" not in validated:
+            validated["author"] = self.default_author
         
         # 确保 date 存在
         if "date" not in validated:

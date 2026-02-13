@@ -20,7 +20,8 @@ class AboutGenerator(BaseGenerator):
         """
         about_file = Path(about_file)
         output_dir = Path(output_dir)
-        about_dir = output_dir / "about"
+        # 使用配置的输出路径
+        about_dir = output_dir / self.config.paths.output.about
         about_dir.mkdir(parents=True, exist_ok=True)
         
         logger.info(f"开始生成关于页面，输出目录: {about_dir}")

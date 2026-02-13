@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ʕ•ᴥ•ʔ Iris{% endblock %}</title>
+    <title>{% block title %}{{ site.title }}{% endblock %}</title>
     <style>
         body {
-            max-width: 1000px;
+            max-width: {{ theme.layout.max_width }};
             margin: 0 auto;
-            padding: 20px;
-            background-color: rgb(250, 249, 245);
+            padding: {{ theme.layout.padding }};
+            background: {{ theme.colors.background }};
+            color: {{ theme.colors.text }};
+            {% if theme.fonts.body %}font-family: {{ theme.fonts.body }};{% endif %}
         }
 
         header {
@@ -32,28 +34,29 @@
 
         nav a {
             text-decoration: none;
-            color: #000;
+            color: {{ theme.colors.link }};
         }
 
         nav a:hover {
             text-decoration: underline;
             text-decoration-thickness: 1px;
             text-underline-offset: 4px;
+            background: {{ theme.colors.hover_bg }};
         }
 
         nav a:link,
         nav a:visited,
         nav a:active {
-            color: #000;
+            color: {{ theme.colors.link }};
         }
 
         footer {
             margin-top: 60px;
             padding-top: 30px;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid {{ theme.colors.border }};
             text-align: center;
             font-size: 0.9em;
-            color: #666;
+            color: {{ theme.colors.text_secondary }};
         }
 
         footer > div {
@@ -61,18 +64,18 @@
         }
 
         footer a {
-            color: #666;
+            color: {{ theme.colors.text_secondary }};
             text-decoration: none;
         }
 
         footer a:hover {
-            color: #000;
+            color: {{ theme.colors.text }};
             text-decoration: underline;
         }
 
         @media (max-width: 767px) {
             body {
-                padding: 15px;
+                padding: {{ theme.layout.padding_mobile }};
             }
             header {
                 margin-top: 20px;
@@ -89,16 +92,15 @@
 <body>
     <!-- 顶部标题区域 -->
     <header>
-        <h1>ʕ•ᴥ•ʔ Iris</h1>
-        <p>Sky is Your Limit.</p>
+        <h1>{{ site.title }}</h1>
+        <p>{{ site.subtitle }}</p>
     </header>
     
     <!-- 导航栏 -->
     <nav>
-        <a href="{{ nav.home }}">主页</a>
-        <a href="{{ nav.categories }}">分组</a>
-        <a href="{{ nav.tags }}">标签</a>
-        <a href="{{ nav.about }}">关于</a>
+        {% for item in navigation %}
+        <a href="{{ item.url }}">{% if item.icon %}{{ item.icon }} {% endif %}{{ item.name }}</a>
+        {% endfor %}
     </nav>
     
     <!-- 正文内容区域，由子模板填充 -->
@@ -106,23 +108,30 @@
     
     <!-- 页脚 -->
     <footer>
-        <div class="footer-copyright">© 2026 Iris. All Rights Reserved.</div>
+        <div class="footer-copyright">{{ footer.copyright }}</div>
+        {% if footer.social_links %}
         <div class="footer-social">
-            <a href="https://github.com/zht7063" target="_blank" rel="noopener noreferrer">GitHub</a> | 
-            <a href="mailto:zht7063@163.com">Email</a>
+            {% for link in footer.social_links %}
+            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.name }}</a>{% if not loop.last %} | {% endif %}
+            {% endfor %}
         </div>
+        {% endif %}
         <div class="footer-info">
-            Powered by iblog • 运行 <span id="runDays">0</span> 天 • 共 {{ total_posts }} 篇博客
+            {% if footer.show_powered_by %}Powered by {{ footer.powered_by_text }}{% endif %}
+            {% if footer.show_run_days %}{% if footer.show_powered_by %} • {% endif %}运行 <span id="runDays">0</span> 天{% endif %}
+            {% if footer.show_post_count %}{% if footer.show_powered_by or footer.show_run_days %} • {% endif %}共 {{ total_posts }} 篇博客{% endif %}
         </div>
     </footer>
     
+    {% if footer.show_run_days %}
     <script>
         // 计算运行天数
-        const startDate = new Date('2026-02-13');
+        const startDate = new Date('{{ site.start_date }}');
         const today = new Date();
         const diffTime = Math.abs(today - startDate);
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         document.getElementById('runDays').textContent = diffDays;
     </script>
+    {% endif %}
 </body>
 </html>

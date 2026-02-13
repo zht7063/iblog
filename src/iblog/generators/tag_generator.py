@@ -23,7 +23,8 @@ class TagGenerator(BaseGenerator):
             output_dir: 输出根目录
         """
         output_dir = Path(output_dir)
-        tags_dir = output_dir / "tags"
+        # 使用配置的输出路径
+        tags_dir = output_dir / self.config.paths.output.tags
         tags_dir.mkdir(parents=True, exist_ok=True)
         
         logger.info("开始生成标签视图")

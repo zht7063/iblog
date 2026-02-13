@@ -4,18 +4,21 @@ from pathlib import Path
 from loguru import logger
 
 from .metadata_parser import MetadataParser
+from .config_models import Config
 
 
 class FileScanner:
     """扫描目录下的 Markdown 文件并提取元数据"""
     
-    def __init__(self, parser: MetadataParser):
+    def __init__(self, parser: MetadataParser, config: Config):
         """初始化文件扫描器
         
         Args:
             parser: 元数据解析器实例
+            config: 配置对象
         """
         self.parser = parser
+        self.config = config
     
     def scan_directory(self, md_dir: Path, exclude_files: list[str] = None) -> list[dict]:
         """扫描目录，返回所有文章的元数据列表
@@ -80,26 +83,37 @@ class FileScanner:
         )
     
     def sort_by_pinned_and_date(self, posts: list[dict], reverse: bool = True) -> list[dict]:
-        """按置顶状态和日期排序文章列表（置顶文章优先）
+        """按置顶状态和配置的排序方式排序文章列表（置顶文章优先）
         
         Args:
             posts: 文章列表
-            reverse: 是否降序排列日期（默认 True，最新的在前）
+            reverse: 是否降序排列（默认 True），会被配置覆盖
             
         Returns:
-            list[dict]: 排序后的文章列表（置顶文章在前，然后按日期排序）
+            list[dict]: 排序后的文章列表（置顶文章在前，然后按配置排序）
         """
-        # 先按日期排序
-        sorted_posts = sorted(
-            posts,
-            key=lambda p: p["metadata"].get("date", ""),
-            reverse=reverse
-        )
-        # 再按置顶状态排序（稳定排序，保持日期顺序）
+        # 从配置读取排序方式
+        sort_by = self.config.posts.sort.by  # "date" | "updated" | "title"
+        sort_order = self.config.posts.sort.order  # "asc" | "desc"
+        reverse = (sort_order == "desc")
+        
+        # 根据配置选择排序字段
+        if sort_by == "updated":
+            sort_key = lambda p: p["metadata"].get("updated", p["metadata"].get("date", ""))
+        elif sort_by == "title":
+            sort_key = lambda p: p["metadata"].get("title", "")
+        else:  # date (默认)
+            sort_key = lambda p: p["metadata"].get("date", "")
+        
+        # 先按配置的字段排序
+        sorted_posts = sorted(posts, key=sort_key, reverse=reverse)
+        
+        # 再按置顶状态排序（稳定排序，保持原有顺序）
         sorted_posts = sorted(
             sorted_posts,
             key=lambda p: not p["metadata"].get("pinned", False)
         )
+        
         return sorted_posts
     
     def group_by_category(self, posts: list[dict]) -> dict[str, list]:

@@ -3,42 +3,64 @@
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
+from .config_models import Config
+
 
 class TemplateRenderer:
     """使用 Jinja2 渲染 HTML 模板"""
     
-    def __init__(self, template_dir: Path):
+    def __init__(self, template_dir: Path, config: Config):
         """初始化模板渲染器
         
         Args:
             template_dir: 模板文件所在目录
+            config: 配置对象
         """
         self.template_dir = Path(template_dir)
+        self.config = config
         self.env = Environment(loader=FileSystemLoader(str(self.template_dir)))
     
-    def _get_nav_links(self, depth: int) -> dict:
-        """根据页面层级生成导航链接
+    def _get_nav_links(self, depth: int) -> list[dict]:
+        """根据页面层级生成导航链接（从配置或使用默认导航）
         
         Args:
             depth: 页面层级，0=根目录, 1=一级子目录
             
         Returns:
-            dict: 包含导航链接的字典
+            list[dict]: 导航项列表，每项包含 name, url, icon
         """
+        # 如果配置了自定义导航，使用配置
+        if self.config.navigation:
+            nav_items = []
+            for item in self.config.navigation.items:
+                url = item.url
+                # 调整相对路径（如果是相对路径）
+                if not url.startswith(('http://', 'https://', '/')):
+                    if depth == 1 and not url.startswith('../'):
+                        url = f"../{url}"
+                nav_items.append({
+                    'name': item.name,
+                    'url': url,
+                    'icon': item.icon
+                })
+            return nav_items
+        
+        # 否则使用默认导航（根据输出路径配置）
+        paths = self.config.paths.output
         if depth == 0:
-            return {
-                "home": "index.html",
-                "categories": "categories/index.html",
-                "tags": "tags/index.html",
-                "about": "about/index.html"
-            }
+            return [
+                {'name': '主页', 'url': 'index.html', 'icon': ''},
+                {'name': '分组', 'url': f'{paths.categories}/index.html', 'icon': ''},
+                {'name': '标签', 'url': f'{paths.tags}/index.html', 'icon': ''},
+                {'name': '关于', 'url': f'{paths.about}/index.html', 'icon': ''}
+            ]
         else:  # depth == 1
-            return {
-                "home": "../index.html",
-                "categories": "../categories/index.html",
-                "tags": "../tags/index.html",
-                "about": "../about/index.html"
-            }
+            return [
+                {'name': '主页', 'url': '../index.html', 'icon': ''},
+                {'name': '分组', 'url': f'../{paths.categories}/index.html', 'icon': ''},
+                {'name': '标签', 'url': f'../{paths.tags}/index.html', 'icon': ''},
+                {'name': '关于', 'url': f'../{paths.about}/index.html', 'icon': ''}
+            ]
     
     def _get_breadcrumb_links(self, current_section: str) -> dict:
         """根据当前页面类型生成面包屑导航链接
@@ -60,6 +82,22 @@ class TemplateRenderer:
         
         return breadcrumb
     
+    def _get_global_context(self, depth: int) -> dict:
+        """获取所有模板共享的全局上下文
+        
+        Args:
+            depth: 页面层级，用于生成导航链接
+            
+        Returns:
+            dict: 全局上下文，包含 site, footer, theme, navigation
+        """
+        return {
+            'site': self.config.site.model_dump(),
+            'footer': self.config.footer.model_dump(),
+            'theme': self.config.theme.model_dump(),
+            'navigation': self._get_nav_links(depth)
+        }
+    
     def render_post(self, content_html: str, metadata: dict, total_posts: int = 0, toc: list = None) -> str:
         """渲染单篇博文页面
         
@@ -73,14 +111,16 @@ class TemplateRenderer:
             str: 完整的 HTML 页面
         """
         template = self.env.get_template("blog_post.html")
-        return template.render(
-            title=metadata.get("title", "无标题"),
-            content_html=content_html,
-            metadata=metadata,
-            nav=self._get_nav_links(depth=1),
-            total_posts=total_posts,
-            toc=toc or []
-        )
+        # 合并全局上下文和页面特定数据
+        context = self._get_global_context(depth=1)
+        context.update({
+            'title': metadata.get("title", "无标题"),
+            'content_html': content_html,
+            'metadata': metadata,
+            'total_posts': total_posts,
+            'toc': toc or []
+        })
+        return template.render(**context)
     
     def render_index(self, posts: list[dict], total_posts: int = 0) -> str:
         """渲染首页
@@ -95,11 +135,13 @@ class TemplateRenderer:
         template = self.env.get_template("index.html")
         # 提取所有文章的 metadata
         posts_metadata = [post["metadata"] for post in posts]
-        return template.render(
-            posts=posts_metadata,
-            nav=self._get_nav_links(depth=0),
-            total_posts=total_posts
-        )
+        # 合并全局上下文
+        context = self._get_global_context(depth=0)
+        context.update({
+            'posts': posts_metadata,
+            'total_posts': total_posts
+        })
+        return template.render(**context)
     
     def render_categories(self, categories: list[dict], total_posts: int = 0) -> str:
         """渲染分类汇总页
@@ -116,11 +158,12 @@ class TemplateRenderer:
             str: 分类汇总页 HTML 内容
         """
         template = self.env.get_template("categories.html")
-        return template.render(
-            categories=categories,
-            nav=self._get_nav_links(depth=1),
-            total_posts=total_posts
-        )
+        context = self._get_global_context(depth=1)
+        context.update({
+            'categories': categories,
+            'total_posts': total_posts
+        })
+        return template.render(**context)
     
     def render_category_detail(self, category_name: str, posts: list[dict], total_posts: int = 0) -> str:
         """渲染单个分类的详情页
@@ -134,20 +177,22 @@ class TemplateRenderer:
             str: 分类详情页 HTML 内容
         """
         template = self.env.get_template("category_detail.html")
-        # 为文章添加相对 URL（从 categories/ 目录访问 blogs/）
+        # 为文章添加相对 URL（使用配置的路径）
+        posts_dir = self.config.paths.output.posts
         posts_with_url = []
         for post in posts:
             metadata = post["metadata"].copy()
-            metadata["url"] = f"../blogs/{post['file_path'].stem}.html"
+            metadata["url"] = f"../{posts_dir}/{post['file_path'].stem}.html"
             posts_with_url.append(metadata)
         
-        return template.render(
-            category_name=category_name,
-            posts=posts_with_url,
-            nav=self._get_nav_links(depth=1),
-            breadcrumb=self._get_breadcrumb_links("categories"),
-            total_posts=total_posts
-        )
+        context = self._get_global_context(depth=1)
+        context.update({
+            'category_name': category_name,
+            'posts': posts_with_url,
+            'breadcrumb': self._get_breadcrumb_links("categories"),
+            'total_posts': total_posts
+        })
+        return template.render(**context)
     
     def render_category_page(self, category: str, posts: list) -> str:
         """渲染分类页面（已弃用，使用 render_category_detail）
@@ -177,11 +222,12 @@ class TemplateRenderer:
             str: 标签云页面 HTML 内容
         """
         template = self.env.get_template("tags.html")
-        return template.render(
-            tags=tags,
-            nav=self._get_nav_links(depth=1),
-            total_posts=total_posts
-        )
+        context = self._get_global_context(depth=1)
+        context.update({
+            'tags': tags,
+            'total_posts': total_posts
+        })
+        return template.render(**context)
     
     def render_tag_detail(self, tag_name: str, posts: list[dict], total_posts: int = 0) -> str:
         """渲染单个标签的详情页
@@ -195,20 +241,22 @@ class TemplateRenderer:
             str: 标签详情页 HTML 内容
         """
         template = self.env.get_template("tag_detail.html")
-        # 为文章添加相对 URL（从 tags/ 目录访问 blogs/）
+        # 为文章添加相对 URL（使用配置的路径）
+        posts_dir = self.config.paths.output.posts
         posts_with_url = []
         for post in posts:
             metadata = post["metadata"].copy()
-            metadata["url"] = f"../blogs/{post['file_path'].stem}.html"
+            metadata["url"] = f"../{posts_dir}/{post['file_path'].stem}.html"
             posts_with_url.append(metadata)
         
-        return template.render(
-            tag_name=tag_name,
-            posts=posts_with_url,
-            nav=self._get_nav_links(depth=1),
-            breadcrumb=self._get_breadcrumb_links("tags"),
-            total_posts=total_posts
-        )
+        context = self._get_global_context(depth=1)
+        context.update({
+            'tag_name': tag_name,
+            'posts': posts_with_url,
+            'breadcrumb': self._get_breadcrumb_links("tags"),
+            'total_posts': total_posts
+        })
+        return template.render(**context)
     
     def render_tag_page(self, tag: str, posts: list) -> str:
         """渲染标签页面（已弃用，使用 render_tag_detail）
@@ -235,9 +283,10 @@ class TemplateRenderer:
             str: 完整的 HTML 页面
         """
         template = self.env.get_template("about.html")
-        return template.render(
-            title=metadata.get("title", "关于"),
-            content_html=content_html,
-            nav=self._get_nav_links(depth=1),
-            total_posts=total_posts
-        )
+        context = self._get_global_context(depth=1)
+        context.update({
+            'title': metadata.get("title", "关于"),
+            'content_html': content_html,
+            'total_posts': total_posts
+        })
+        return template.render(**context)

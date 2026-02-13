@@ -18,7 +18,8 @@ class PostGenerator(BaseGenerator):
             output_dir: 输出根目录
         """
         output_dir = Path(output_dir)
-        blogs_dir = output_dir / "blogs"
+        # 使用配置的输出路径
+        blogs_dir = output_dir / self.config.paths.output.posts
         blogs_dir.mkdir(parents=True, exist_ok=True)
         
         logger.info(f"开始生成博文，输出目录: {blogs_dir}")
